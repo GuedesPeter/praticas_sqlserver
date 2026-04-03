@@ -201,36 +201,3 @@ LEFT JOIN Sales.SalesOrderHeader SO
     ON SO.CustomerID = C.CustomerID
 WHERE SO.CustomerID IS NULL;
 
-/*
-AdventureWorks - SUMÁRIO:
-
--- Person.Person           → Pessoa
--- Sales.Customer           → Cliente
--- Sales.SalesOrderHeader   → Cabeçalho do Pedido
--- Sales.SalesOrderDetail   → Detalhes do Pedido
--- Production.Product       → Produto
--- Production.ProductSubcategory → Subcategoria de Produto
--- Production.ProductCategory    → Categoria de Produto
--- Production.ProductInventory   → Estoque de Produto
--- HumanResources.Employee       → Funcionário
--- Sales.Store                   → Loja
--- Sales.SalesPerson             → Vendedor
--- Sales.SalesTerritory          → Território de Vendas
--- Person.Address                → Endereço
--- Person.StateProvince          → Estado/Província
--- Person.CountryRegion          → País/Região
--- HumanResources.Department      → Departamento
--- HumanResources.Shift           → Turno
--- HumanResources.EmployeeDepartmentHistory → Histórico Departamento do Funcionário
--- Production.Location            → Localização
--- Production.WorkOrder           → Ordem de Produção
--- Production.TransactionHistory  → Histórico de Transações
--- Production.UnitMeasure         → Unidade de Medida
--- Production.BillOfMaterials     → Lista de Materiais
--- Sales.SalesTaxRate             → Taxa de Imposto
--- Sales.SalesTerritoryHistory    → Histórico do Território de Vendas
--- Purchasing.Vendor              → Fornecedor
--- Purchasing.PurchaseOrderHeader → Cabeçalho da Ordem de Compra
--- Purchasing.PurchaseOrderDetail → Detalhe da Ordem de Compra
--- Purchasing.ProductVendor       → Produto do Fornecedor
-*/
