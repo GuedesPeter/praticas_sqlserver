@@ -1,73 +1,156 @@
-USE [AdventureWorks]
+USE [AdventureWorks];
 GO
 
 -- =========================================
--- EXERCÍCIOS - SQL SERVER (AdventureWorks)
+-- EX2.: - SQL SERVER (AdventureWorks)
 -- =========================================
 
 -- -------------------------------
 -- 📦 BATCH (5 exercícios)
 -- -------------------------------
--- 1. Crie dois batches separados: um que declare uma variável e outro que tente utilizá-la. Observe o comportamento.
--- 2. Crie uma tabela temporária em um batch e tente acessá-la em outro.
--- 3. Execute dois SELECTs separados por GO e verifique se há dependência entre eles.
--- 4. Crie um batch que insere dados e outro que faz SELECT desses dados.
--- 5. Teste o uso de GO dentro de um script com múltiplas instruções DML.
+-- 1. Execute dois SELECTs simples separados por GO usando a tabela Person.Person.
+SELECT CONCAT(FirstName, ' ', MiddleName, '  ',LastName) AS Compl_Name
+FROM [Person].[Person]
+ORDER BY FirstName;
+GO
+
+SELECT BusinessEntityID,PersonType FROM [Person].[Person];
+GO
+
+-- 2. Crie um batch que declare uma variável e faça um SELECT, depois outro batch com outro SELECT.
+DECLARE @ID INT
+SET @ID = 10;
+
+SELECT BusinessEntityID, CONCAT(FirstName, ' ', MiddleName, '  ',LastName) AS Compl_Name
+FROM [Person].[Person]
+WHERE BusinessEntityID = @ID;
+GO
+
+DECLARE @NAME VARCHAR(30)
+SET @NAME = 'Michael';
+
+SELECT BusinessEntityID, CONCAT(FirstName, ' ', MiddleName, '  ',LastName) AS Compl_Name
+FROM [Person].[Person]
+WHERE FirstName LIKE '%Michael%'
+ORDER BY BusinessEntityID;
+GO
+
+-- 3. Teste declarar uma variável antes do GO e utilizá-la depois.
+
+DECLARE @VAR INT
+SET @VAR = 10;
+GO
+
+SELECT BusinessEntityID, (FirstName + ' ' + LastName) AS Name
+FROM [Person].[Person]
+WHERE BusinessEntityID = @VAR; -- ERRO
+
+-- 4. Faça dois SELECTs em batches diferentes consultando Production.Product.
+
+SELECT TOP 20 ProductID, Name, MakeFlag
+FROM [Production].[Product];
+GO
+
+SELECT TOP 10 ProductID,ReorderPoint 
+FROM [Production].[Product];
+GO
+
+-- 5. Execute um SELECT antes e depois de um GO e observe o comportamento.
+SELECT SalesOrderID, CustomerID, TotalDue 
+FROM [Sales].[SalesOrderHeader]
+ORDER BY SalesOrderID;
+
+SELECT SalesOrderID, CustomerID, TotalDue 
+FROM [Sales].[SalesOrderHeader]
+ORDER BY SalesOrderID;
+GO
 
 -- -------------------------------
--- 🏷️ REGRAS PARA NOMES DE OBJETOS (5 exercícios)
+-- 🏷️ NOMES DE OBJETOS (5 exercícios)
 -- -------------------------------
--- 1. Crie uma tabela com nome válido e outra usando colchetes com espaço no nome.
--- 2. Tente criar uma tabela com nome de palavra reservada e corrija usando delimitadores.
--- 3. Crie uma tabela com nome iniciando com underscore (_).
--- 4. Tente criar um objeto com mais de 128 caracteres no nome e observe o erro.
--- 5. Crie colunas com nomes que diferem apenas por maiúsculas/minúsculas e teste o comportamento.
+-- 1. Faça um SELECT usando alias simples para a tabela Person.Person.
+SELECT PP.BusinessEntityID,PP.FirstName
+FROM [Person].[Person] AS PP;
+GO
+
+-- 2. Use alias com colchetes para colunas com nomes personalizados.
+SELECT SS.BusinessEntityID [Id], SS.Bonus [Plus]
+FROM [Sales].[SalesPerson] AS SS;
+GO
+
+-- 3. Crie um SELECT usando alias diferentes para colunas de Production.Product.
+SELECT  
+	PP.ProductID [Id_Produto],
+	PP.Color [Cor], 
+	PP.Name [Nome_Produto]
+FROM [Production].[Product] PP
+WHERE PP.Color IS NOT NULL
+ORDER BY PP.ProductID;
+GO
+
+-- 4. Use nomes de colunas com e sem alias na mesma query.
+SELECT 
+	P.FirstName,
+	P.LastName,
+	CONCAT(P.FirstName,' ',P.LastName) AS COMP_NAME
+FROM [Person].[Person] P;
+GO
+
+-- 5. Teste usar um alias com espaço (utilizando colchetes).
+SELECT 
+	HE.BusinessEntityID [Id Funcionário],
+	CONCAT(PP.FirstName,' ',PP.LastName) [Nome Funcionário]
+FROM [HumanResources].[Employee] HE
+JOIN [Person].[Person] PP ON PP.BusinessEntityID = HE.BusinessEntityID
+ORDER BY HE.BusinessEntityID;
+GO
+
 
 -- -------------------------------
 -- 🔢 VARIÁVEIS (5 exercícios)
 -- -------------------------------
--- 1. Declare uma variável para armazenar o nome de um produto da tabela Production.Product e exiba o valor.
--- 2. Use uma variável para armazenar um preço e filtre produtos com base nesse valor.
--- 3. Declare duas variáveis e faça uma operação matemática entre elas.
--- 4. Utilize uma variável em uma cláusula WHERE na tabela Person.Person.
--- 5. Armazene o resultado de um COUNT em uma variável e exiba o valor.
+-- 1. Declare uma variável INT e atribua um valor fixo, depois exiba.
+-- 2. Declare uma variável para armazenar um preço e use no WHERE em Production.Product.
+-- 3. Declare uma variável para FirstName e filtre na tabela Person.Person.
+-- 4. Atribua o resultado de um COUNT da tabela Person.Person a uma variável.
+-- 5. Use uma variável para limitar resultados com TOP.
 
 -- -------------------------------
 -- ➕ OPERADORES (5 exercícios)
 -- -------------------------------
--- 1. Utilize operadores aritméticos para calcular o preço com desconto em Production.Product.
--- 2. Use operadores de comparação para filtrar produtos com preço maior que um valor específico.
--- 3. Combine condições com AND e OR na tabela Sales.SalesOrderHeader.
--- 4. Utilize operador de concatenação para juntar nome e sobrenome em Person.Person.
--- 5. Use operador NOT para excluir registros com determinada condição.
+-- 1. Liste produtos com preço maior que 100 usando operador de comparação.
+-- 2. Use AND para filtrar produtos com preço maior que 50 e cor não nula.
+-- 3. Use OR para buscar produtos de duas cores diferentes.
+-- 4. Concatene FirstName e LastName na tabela Person.Person.
+-- 5. Use NOT para excluir produtos sem preço definido.
 
 -- -------------------------------
 -- ⚙️ INSTRUÇÕES DINÂMICAS (5 exercícios)
 -- -------------------------------
--- 1. Monte uma query dinâmica para selecionar todos os registros de Production.Product.
--- 2. Crie uma instrução dinâmica que filtre produtos por cor.
--- 3. Use sp_executesql com parâmetros para buscar dados de Person.Person.
--- 4. Crie uma query dinâmica que selecione colunas específicas com base em variável.
--- 5. Monte uma instrução dinâmica que conte registros de uma tabela escolhida via variável.
+-- 1. Crie uma string com SELECT * FROM Person.Person e execute com EXEC.
+-- 2. Monte uma query dinâmica simples para Production.Product.
+-- 3. Use uma variável para armazenar nome da tabela e montar SELECT.
+-- 4. Execute uma query dinâmica filtrando por ProductID.
+-- 5. Teste sp_executesql com uma consulta simples sem parâmetros.
 
 -- -------------------------------
--- 🔁 CONTROLADOR DE FLUXO (5 exercícios)
+-- 🔁 CONTROLE DE FLUXO (5 exercícios)
 -- -------------------------------
--- 1. Use IF...ELSE para verificar se existem produtos com preço acima de um valor.
--- 2. Crie um WHILE que percorra IDs de produtos e exiba informações básicas.
--- 3. Use BEGIN...END para agrupar múltiplas instruções dentro de um IF.
--- 4. Utilize BREAK para interromper um loop ao atingir certa condição.
--- 5. Utilize CONTINUE para pular uma iteração em um loop.
+-- 1. Use IF para verificar se existe algum registro em Person.Person.
+-- 2. Use IF...ELSE para verificar se há produtos com preço acima de 1000.
+-- 3. Crie um WHILE simples que conte de 1 até 5.
+-- 4. Dentro de um WHILE, exiba números usando PRINT.
+-- 5. Use BEGIN...END dentro de um IF.
 
 -- -------------------------------
 -- 📊 GROUP BY (5 exercícios)
 -- -------------------------------
--- 1. Agrupe produtos por cor e conte quantos existem em cada grupo.
--- 2. Agrupe vendas por cliente na tabela Sales.SalesOrderHeader e calcule total de pedidos.
--- 3. Agrupe produtos por categoria e calcule o preço médio.
--- 4. Utilize GROUP BY com HAVING para filtrar grupos com contagem maior que um valor.
--- 5. Agrupe dados por ano de venda e calcule o total vendido por ano.
+-- 1. Agrupe produtos por Color e conte quantos existem.
+-- 2. Agrupe produtos por SafetyStockLevel.
+-- 3. Agrupe pessoas por tipo (PersonType) na tabela Person.Person.
+-- 4. Conte quantos produtos existem por classe (Class).
+-- 5. Use GROUP BY com HAVING para mostrar grupos com mais de 10 registros.
 
 -- =========================================
--- FIM DOS EXERCÍCIOS
+-- FIM
 -- =========================================
