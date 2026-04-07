@@ -110,7 +110,27 @@ GO
 -- 🔢 VARIÁVEIS (5 exercícios)
 -- -------------------------------
 -- 1. Declare uma variável INT e atribua um valor fixo, depois exiba.
+DECLARE @VALOR INT
+SET @VALOR = 100;
+
+IF (@VALOR = 100)
+	PRINT 'VALE CEM'
+ELSE
+	PRINT 'OUTRO VALOR'
+
+
 -- 2. Declare uma variável para armazenar um preço e use no WHERE em Production.Product.
+DECLARE @VLR MONEY
+SET @VLR = 539.99;
+
+SELECT 
+	ProductID,
+	Name,
+	ListPrice
+FROM [Production].[Product]
+WHERE ListPrice = @VLR
+
+
 -- 3. Declare uma variável para FirstName e filtre na tabela Person.Person.
 -- 4. Atribua o resultado de um COUNT da tabela Person.Person a uma variável.
 -- 5. Use uma variável para limitar resultados com TOP.
