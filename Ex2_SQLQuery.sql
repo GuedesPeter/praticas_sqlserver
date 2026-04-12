@@ -6,7 +6,7 @@ GO
 -- =========================================
 
 -- -------------------------------
--- 📦 BATCH (5 exercícios)
+-- 📦 BATCH 
 -- -------------------------------
 -- 1. Execute dois SELECTs simples separados por GO usando a tabela Person.Person.
 SELECT CONCAT(FirstName, ' ', MiddleName, '  ',LastName) AS Compl_Name
@@ -107,7 +107,7 @@ GO
 
 
 -- -------------------------------
--- 🔢 VARIÁVEIS (5 exercícios)
+-- 🔢 VARIÁVEIS
 -- -------------------------------
 -- 1. Declare uma variável INT e atribua um valor fixo, depois exiba.
 DECLARE @VALOR INT
@@ -132,29 +132,108 @@ WHERE ListPrice = @VLR
 
 
 -- 3. Declare uma variável para FirstName e filtre na tabela Person.Person.
+DECLARE @NAME VARCHAR(30)
+SET @NAME = 'Michael'
+
+SELECT CONCAT(FirstName, ' ', MiddleName, ' ',LastName) AS Compl_Name
+FROM [Person].[Person]
+WHERE FirstName = @NAME;
+
 -- 4. Atribua o resultado de um COUNT da tabela Person.Person a uma variável.
+DECLARE @CONTAGEM INT
+SET @CONTAGEM = (SELECT COUNT (*) FROM [Person].[Person])
+
+SELECT @CONTAGEM AS Tot_Linhas;
+
 -- 5. Use uma variável para limitar resultados com TOP.
+DECLARE @NUM INT
+SET @NUM = 5
+
+SELECT TOP (@NUM) *
+FROM [Person].[Person]
+ORDER BY BusinessEntityID;
 
 -- -------------------------------
--- ➕ OPERADORES (5 exercícios)
+-- ➕ OPERADORES 
 -- -------------------------------
 -- 1. Liste produtos com preço maior que 100 usando operador de comparação.
+SELECT ProductID, ListPrice
+FROM [Production].[Product]
+WHERE ListPrice > 100.00
+ORDER BY ListPrice;
+
 -- 2. Use AND para filtrar produtos com preço maior que 50 e cor não nula.
+SELECT ProductID, Name, Color, ListPrice
+FROM [Production].[Product]
+WHERE ListPrice > 50.00 AND Color IS NOT NULL
+ORDER BY ProductID;
+
 -- 3. Use OR para buscar produtos de duas cores diferentes.
+SELECT ProductID, Name, Color
+FROM [Production].[Product]
+WHERE Color = 'Red' OR Color = 'Silver'
+ORDER BY ProductID;
+
 -- 4. Concatene FirstName e LastName na tabela Person.Person.
+SELECT 
+	CONCAT(FirstName,' ', LastName) AS COMP_NAME
+FROM [Person].[Person]
+ORDER BY COMP_NAME;
+
 -- 5. Use NOT para excluir produtos sem preço definido.
+SELECT ProductID, Name, ListPrice
+FROM [Production].[Product]
+WHERE ListPrice IS NOT NULL AND ListPrice <> 0.00
+ORDER BY ProductID;
 
 -- -------------------------------
--- ⚙️ INSTRUÇÕES DINÂMICAS (5 exercícios)
+-- ⚙️ INSTRUÇÕES DINÂMICAS 
 -- -------------------------------
 -- 1. Crie uma string com SELECT * FROM Person.Person e execute com EXEC.
+DECLARE @SQL VARCHAR(50)
+SET @SQL = 'SELECT * FROM Person.Person'
+
+EXEC(@SQL);
+
 -- 2. Monte uma query dinâmica simples para Production.Product.
+DECLARE @DADOSPROD VARCHAR (100)
+SET @DADOSPROD = 'SELECT ProductID, Name, ListPrice FROM Production.Product'
+
+EXEC (@DADOSPROD);
+
 -- 3. Use uma variável para armazenar nome da tabela e montar SELECT.
+DECLARE @TABELA VARCHAR(50)
+DECLARE @SQL NVARCHAR(MAX)
+
+SET @TABELA = 'Person.Person'
+
+SET @SQL = '
+SELECT (FirstName + '' '' + LastName) AS NomeCompleto
+FROM ' + @TABELA
+
+EXEC(@SQL);
+
 -- 4. Execute uma query dinâmica filtrando por ProductID.
+DECLARE @ProductID INT
+DECLARE @SQL NVARCHAR(MAX)
+
+SET @ProductID = 100
+
+SET @SQL = 'SELECT * FROM [Production].[Product] WHERE ProductID = ' 
+           + CAST(@ProductID AS NVARCHAR)
+
+EXEC(@SQL);
+
 -- 5. Teste sp_executesql com uma consulta simples sem parâmetros.
+DECLARE @QUERY NVARCHAR(100)
+
+SET @QUERY = N'SELECT * FROM Production.Product'
+
+EXEC sp_executesql @QUERY;
+
 
 -- -------------------------------
--- 🔁 CONTROLE DE FLUXO (5 exercícios)
+-- 🔁 CONTROLE DE FLUXO 
 -- -------------------------------
 -- 1. Use IF para verificar se existe algum registro em Person.Person.
 -- 2. Use IF...ELSE para verificar se há produtos com preço acima de 1000.
@@ -163,7 +242,7 @@ WHERE ListPrice = @VLR
 -- 5. Use BEGIN...END dentro de um IF.
 
 -- -------------------------------
--- 📊 GROUP BY (5 exercícios)
+-- 📊 GROUP BY 
 -- -------------------------------
 -- 1. Agrupe produtos por Color e conte quantos existem.
 -- 2. Agrupe produtos por SafetyStockLevel.
@@ -172,5 +251,4 @@ WHERE ListPrice = @VLR
 -- 5. Use GROUP BY com HAVING para mostrar grupos com mais de 10 registros.
 
 -- =========================================
--- FIM
 -- =========================================
