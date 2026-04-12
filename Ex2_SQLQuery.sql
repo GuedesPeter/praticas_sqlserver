@@ -236,19 +236,84 @@ EXEC sp_executesql @QUERY;
 -- 🔁 CONTROLE DE FLUXO 
 -- -------------------------------
 -- 1. Use IF para verificar se existe algum registro em Person.Person.
+IF EXISTS (SELECT 1 FROM [Person].[Person])
+	PRINT 'Existem registros na tabela.'
+ELSE
+	PRINT 'A tabela não possui registros'
+
 -- 2. Use IF...ELSE para verificar se há produtos com preço acima de 1000.
+IF EXISTS (SELECT 1 FROM [Production].[Product] WHERE ListPrice > 1000)
+	PRINT 'EXISTEM PRODUTOS ACIMA DE R$ 1000'
+ELSE
+	PRINT 'NÃO EXISTEM PRODUTOS ACIMA DE R$ 1000'
+
 -- 3. Crie um WHILE simples que conte de 1 até 5.
+DECLARE @CONT INT
+SET @CONT = 1
+
+WHILE @CONT <= 5
+BEGIN
+	SELECT @CONT AS NUMERO
+    SET @CONT = @CONT + 1
+END
+
 -- 4. Dentro de um WHILE, exiba números usando PRINT.
+DECLARE @NUMERO INT
+SET @NUMERO = 1
+
+WHILE @NUMERO <= 20
+BEGIN
+	PRINT @NUMERO
+	SET @NUMERO = @NUMERO + 1
+END
+
 -- 5. Use BEGIN...END dentro de um IF.
+IF (SELECT COUNT(*) FROM [Production].[Product])  > 100
+BEGIN
+	SELECT TOP 10 ProductID, Name FROM [Production].[Product]
+	ORDER BY ProductID
+END
+ELSE
+	PRINT 'Erro!'
+
+IF (SELECT COUNT(*) FROM [Production].[Product])  > 1000
+BEGIN
+	SELECT TOP 10 ProductID, Name FROM [Production].[Product]
+	ORDER BY ProductID
+END
+ELSE
+	PRINT 'Erro!'
 
 -- -------------------------------
 -- 📊 GROUP BY 
 -- -------------------------------
 -- 1. Agrupe produtos por Color e conte quantos existem.
--- 2. Agrupe produtos por SafetyStockLevel.
--- 3. Agrupe pessoas por tipo (PersonType) na tabela Person.Person.
--- 4. Conte quantos produtos existem por classe (Class).
--- 5. Use GROUP BY com HAVING para mostrar grupos com mais de 10 registros.
+SELECT Color, COUNT(ProductID) AS TotalProducts
+FROM [Production].[Product]
+GROUP BY Color;
 
--- =========================================
+-- 2. Agrupe produtos por SafetyStockLevel.
+SELECT SafetyStockLevel, COUNT(*) AS TotalProducts
+FROM [Production].[Product]
+GROUP BY SafetyStockLevel;
+
+-- 3. Agrupe pessoas por tipo (PersonType) na tabela Person.Person.
+SELECT PersonType, COUNT(*) AS QTD_Person
+FROM [Person].[Person]
+GROUP BY PersonType;
+
+-- 4. Conte quantos produtos existem por classe (Class).
+SELECT Class, COUNT(*) AS QTD_Product
+FROM [Production].[Product]
+WHERE Class IS NOT NULL
+GROUP BY Class;
+
+-- 5. Use GROUP BY com HAVING para mostrar grupos com mais de 30 registros.
+SELECT Color, COUNT(*) AS QtdProduct
+FROM [Production].[Product]
+WHERE Color IS NOT NULL
+GROUP BY Color
+HAVING COUNT(*) > 30
+ORDER BY Color;
+
 -- =========================================
