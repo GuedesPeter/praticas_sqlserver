@@ -130,14 +130,48 @@ SELECT
 FROM [Production].[Product] P
 CROSS JOIN [Sales].[SalesTerritory] ST;
 
-
 -- 11. Calcule o total de produtos vendidos por produto.
--- 12. Mostre o faturamento total por produto.
--- 13. Liste o total de vendas por território.
--- 14. Mostre a quantidade de produtos diferentes por pedido.
--- 15. Exiba o maior valor de pedido por cliente.
+SELECT P.ProductID, SUM(S.OrderQty) AS Qt_Vendidos
+FROM [Production].[Product] P
+JOIN [Sales].[SalesOrderDetail] S ON P.ProductID = S.ProductID
+GROUP BY P.ProductID
+ORDER BY P.ProductID;
 
--- 16. Liste clientes que fizeram mais de 10 pedidos (usar GROUP BY + HAVING).
+-- 12. Mostre o faturamento total por produto.
+SELECT P.ProductID, P.Name, SUM(S.LineTotal) AS Tot_Faturamento
+FROM [Production].[Product] P
+JOIN [Sales].[SalesOrderDetail] S ON P.ProductID = S.ProductID
+GROUP BY P.ProductID, P.Name
+ORDER BY P.ProductID;
+
+-- 13. Liste o total de vendas por território.
+SELECT T.TerritoryID, T.Name, SUM(S.TotalDue) AS TotSales
+FROM [Sales].[SalesOrderHeader] S
+JOIN [Sales].[SalesTerritory] T ON S.TerritoryID = T.TerritoryID
+GROUP BY T.TerritoryID, T.Name
+ORDER BY T.TerritoryID;
+
+-- 14. Mostre a quantidade de produtos diferentes por pedido.
+SELECT 
+    S.SalesOrderID, 
+    COUNT(DISTINCT S.ProductID) AS QtProduct
+FROM [Sales].[SalesOrderDetail] S
+GROUP BY S.SalesOrderID
+ORDER BY S.SalesOrderID;
+
+-- 15. Exiba o maior valor de pedido por cliente.
+SELECT CustomerID, MAX(TotalDue) AS MaxPed
+FROM [Sales].[SalesOrderHeader]
+GROUP BY CustomerID
+ORDER BY CustomerID;
+
+-- 16. Liste clientes que fizeram mais de 10 pedidos.
+SELECT CustomerID, COUNT(SalesOrderID) AS CountPed
+FROM [Sales].[SalesOrderHeader]
+GROUP BY CustomerID
+HAVING COUNT(SalesOrderID) > 10
+ORDER BY CustomerID;
+
 -- 17. Mostre produtos com média de quantidade vendida maior que 5.
 -- 18. Liste territórios com total de vendas acima de 1.000.000.
 -- 19. Mostre o total de pedidos por cliente, incluindo apenas os que têm pedidos.
