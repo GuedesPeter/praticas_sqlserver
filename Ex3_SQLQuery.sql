@@ -173,6 +173,49 @@ HAVING COUNT(SalesOrderID) > 10
 ORDER BY CustomerID;
 
 -- 17. Mostre produtos com média de quantidade vendida maior que 5.
--- 18. Liste territórios com total de vendas acima de 1.000.000.
+SELECT P.ProductID, P.Name,AVG(S.OrderQty) AS MedQtde
+FROM [Sales].[SalesOrderDetail] S
+JOIN [Production].[Product] P ON S.ProductID = P.ProductID
+GROUP BY P.ProductID, P.Name
+HAVING AVG(S.OrderQty) > 5
+ORDER BY P.ProductID;
+
+-- 18. Liste territórios com total de vendas acima de 9.000.000.
+SELECT T.TerritoryID, T.Name, SUM(S.TotalDue) AS TotSales
+FROM [Sales].[SalesOrderHeader] S
+JOIN [Sales].[SalesTerritory] T ON T.TerritoryID = S.TerritoryID
+GROUP BY T.TerritoryID, T.Name
+HAVING SUM(S.TotalDue) > 9000000
+ORDER BY T.TerritoryID;
+
 -- 19. Mostre o total de pedidos por cliente, incluindo apenas os que têm pedidos.
+-- Op.1
+SELECT C.CustomerID, COUNT(S.SalesOrderID) AS TotPed
+FROM [Sales].[Customer] C
+JOIN [Sales].[SalesOrderHeader] S ON C.CustomerID = S.CustomerID
+GROUP BY C.CustomerID
+ORDER BY C.CustomerID;
+
+-- Op.2
+SELECT S.CustomerID, COUNT(S.SalesOrderID) AS TotPed 
+FROM [Sales].[SalesOrderHeader] S
+GROUP BY S.CustomerID
+ORDER BY S.CustomerID;
+
 -- 20. Exiba clientes e o total gasto, ordenando do maior para o menor.
+
+-- Op.1
+SELECT S.CustomerID, SUM(S.TotalDue) AS TotGasto
+FROM [Sales].[SalesOrderHeader] S
+GROUP BY S.CustomerID
+ORDER BY TotGasto DESC;
+
+-- Op.2
+SELECT 
+    C.CustomerID,
+    CAST(SUM(S.TotalDue) AS DECIMAL(18,2)) AS TotalGasto
+FROM Sales.Customer AS C
+INNER JOIN Sales.SalesOrderHeader AS S 
+    ON S.CustomerID = C.CustomerID
+GROUP BY C.CustomerID
+ORDER BY TotalGasto DESC;
