@@ -48,6 +48,51 @@ AdventureWorks - SUMÁRIO:
 -- Entre 1.000.000 e 3.000.000 → "Desempenho médio"
 -- Caso contrário → "Baixo desempenho"
 
+DECLARE @ID INT
+SET @ID = 275
+
+IF (SELECT SalesYTD 
+    FROM Sales.SalesPerson 
+    WHERE BusinessEntityID = @ID) > 3000000 
+BEGIN
+    PRINT 'Alto desempenho';
+END
+ELSE IF (SELECT SalesYTD 
+         FROM Sales.SalesPerson 
+         WHERE BusinessEntityID = @ID) BETWEEN 1000000 AND 3000000
+BEGIN
+    PRINT 'Desempenho médio';
+END
+ELSE
+BEGIN
+    PRINT 'Baixo desempenho';
+END
+
+-- Tratando NULL e repetições
+DECLARE @ID INT = 274;
+DECLARE @SalesYTD MONEY;
+
+SELECT @SalesYTD = SalesYTD
+FROM Sales.SalesPerson
+WHERE BusinessEntityID = @ID;
+
+IF @SalesYTD IS NULL
+BEGIN
+    PRINT 'Vendedor não encontrado';
+END
+ELSE IF @SalesYTD > 3000000
+BEGIN
+    PRINT 'Alto desempenho';
+END
+ELSE IF @SalesYTD BETWEEN 1000000 AND 3000000
+BEGIN
+    PRINT 'Desempenho médio';
+END
+ELSE
+BEGIN
+    PRINT 'Baixo desempenho';
+END
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 2
