@@ -100,12 +100,55 @@ END
 -- Se maior que 1000 → "Produto Premium"
 -- Caso contrário → "Produto comum"
 
+DECLARE @ID INT = 706;
+DECLARE @SQL MONEY
+
+
+SELECT @SQL = ListPrice
+FROM [Production].[Product]
+WHERE ProductID = @ID;
+
+IF @SQL IS NULL
+BEGIN
+    PRINT 'Valor não encontrado!';
+END
+ELSE IF @SQL > 1000
+BEGIN
+    PRINT 'Produto Premium';
+END
+ELSE
+BEGIN
+    PRINT 'Produto Comum';
+END
+
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 3
 -- Verifique a quantidade de pedidos (SalesOrderID) de um cliente.
 -- Se > 50 → "Cliente frequente"
 -- Caso contrário → "Cliente ocasional"
+
+DECLARE @CLI INT = 29825
+DECLARE @ORDER INT
+
+SELECT @ORDER = COUNT(SalesOrderID)
+FROM [Sales].[SalesOrderHeader]
+WHERE CustomerID = @CLI
+
+IF @ORDER = 0
+BEGIN
+    PRINT 'Cliente sem pedidos.';;
+END
+ELSE IF @ORDER > 50
+BEGIN
+    PRINT 'Cliente frequente';
+END
+ELSE
+BEGIN
+    PRINT 'Cliente ocasional';
+END
+
 
 ------------------------------------------------------------
 
@@ -114,6 +157,24 @@ END
 -- Se for NULL → "Peso não informado"
 -- Caso contrário → "Peso disponível"
 
+DECLARE @ID INT = 29825
+DECLARE @WEIGHT DECIMAL
+
+SELECT @WEIGHT = Weight
+FROM [Production].[Product]
+WHERE ProductID = @ID;
+
+IF @WEIGHT IS NULL AND NOT EXISTS (
+    SELECT 1 FROM [Production].[Product] WHERE ProductID = @ID
+)
+BEGIN
+    PRINT 'Peso não informado';
+END
+ELSE
+BEGIN
+    PRINT 'Peso disponível';
+END
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 5
@@ -121,52 +182,154 @@ END
 -- Se sim → "Pedido antigo"
 -- Caso contrário → "Pedido recente"
 
+DECLARE @ORDERID INT = 43660
+DECLARE @ORDERYEAR INT 
+
+-- Op.1
+SELECT @ORDERYEAR = YEAR(OrderDate) -- [Função YEAR converte o ano para INT]
+FROM [Sales].[SalesOrderHeader]
+WHERE SalesOrderID = @ORDERID
+
+IF @ORDERYEAR IS NULL
+BEGIN
+    PRINT 'ERRO';
+END
+ELSE IF @ORDERYEAR < 2013
+BEGIN 
+    PRINT 'Pedido antigo';
+END
+ELSE
+BEGIN
+    PRINT 'Pedido recente';
+END
+
+-- Op.2
+DECLARE @ORDERID INT = 69730;
+DECLARE @ORDERDATE DATETIME;
+
+SELECT @ORDERDATE = OrderDate
+FROM [Sales].[SalesOrderHeader]
+WHERE SalesOrderID = @ORDERID;
+
+IF @ORDERDATE IS NULL
+BEGIN
+    PRINT 'ERRO';
+END
+ELSE IF @ORDERDATE < '2013-01-01'
+BEGIN 
+    PRINT 'Pedido antigo';
+END
+ELSE
+BEGIN
+    PRINT 'Pedido recente';
+END
+
+
 -- EXERCÍCIO 6
 -- Liste produtos ordenando por ListPrice crescente.
+
+SELECT ProductID,Name, ListPrice
+FROM [Production].[Product]
+ORDER BY ListPrice;
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 7
 -- Liste clientes ordenando por LastName decrescente.
+SELECT C.PersonID,CONCAT(P.FirstName,' ',P.LastName) AS FullName
+FROM [Sales].[Customer] C
+JOIN [Person].[Person] P ON C.PersonID = P.BusinessEntityID
+ORDER BY P.LastName DESC;
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 8
 -- Liste pedidos ordenando por OrderDate mais recente primeiro.
+SELECT SalesOrderID, CAST(OrderDate AS DATE) AS OrderDateOnly
+FROM [Sales].[SalesOrderHeader]
+ORDER BY OrderDateOnly DESC;
+
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 9
 -- Liste produtos ordenando por preço (desc) e nome (asc).
+SELECT Name, ListPrice
+FROM [Production].[Product]
+ORDER BY ListPrice DESC, Name ASC;
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 10
 -- Liste funcionários ordenando por HireDate e depois por JobTitle.
-
+SELECT BusinessEntityID, HireDate, JobTitle
+FROM [HumanResources].[Employee]
+ORDER BY HireDate, JobTitle;
 
 -- EXERCÍCIO 11
 -- Conte quantos produtos existem por ProductSubcategoryID.
+SELECT ProductSubcategoryID,COUNT(*) AS QtProd
+FROM [Production].[Product]
+WHERE ProductSubcategoryID IS NOT NULL
+GROUP BY ProductSubcategoryID;
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 12
 -- Agrupe pedidos por CustomerID e conte quantos cada cliente possui.
+SELECT CustomerID, COUNT(SalesOrderID) AS QtSales
+FROM [Sales].[SalesOrderHeader]
+GROUP BY CustomerID;
+
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 13
 -- Agrupe vendas por TerritoryID e calcule o total de pedidos.
+SELECT TerritoryID, SUM(TotalDue) AS TotSales
+FROM [Sales].[SalesOrderHeader]
+GROUP BY TerritoryID
+ORDER BY TerritoryID;
+
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 14
 -- Agrupe produtos por Color e conte quantos existem de cada cor.
 
+-- Op.1 - NULL
+SELECT Color, COUNT(*) AS QtProd
+FROM [Production].[Product]
+GROUP BY Color
+ORDER BY QtProd;
+
+-- Op.2 - NOT NULL
+SELECT Color, COUNT(*) AS QtProd
+FROM [Production].[Product]
+WHERE Color IS NOT NULL AND Color <> ''
+GROUP BY Color
+ORDER BY QtProd;
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 15
 -- Agrupe pedidos por ano (OrderDate) usando funções de data.
+
+-- Op.1
+SELECT 
+    YEAR(OrderDate) AS YearOrder,
+    COUNT(*) AS QtSales
+FROM [Sales].[SalesOrderHeader]
+GROUP BY YEAR(OrderDate)
+ORDER BY YearOrder;
+
+-- Op.2
+SELECT 
+    COUNT(SalesOrderID) QtSales, 
+    YEAR(OrderDate) YearOrder
+FROM [Sales].[SalesOrderHeader]
+GROUP BY YEAR(OrderDate)
+ORDER BY YearOrder;
 
 -- EXERCÍCIO 16
 -- Calcule o preço médio dos produtos.
