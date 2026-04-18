@@ -333,31 +333,185 @@ ORDER BY YearOrder;
 
 -- EXERCÍCIO 16
 -- Calcule o preço médio dos produtos.
+SELECT AVG(ListPrice) AS Vl_Prod_Med
+FROM [Production].[Product]
+WHERE ListPrice IS NOT NULL AND ListPrice <> 0;
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 17
 -- Encontre o maior e o menor ListPrice.
+SELECT
+    MAX(ListPrice) AS MaxVL,
+    MIN(ListPrice) As MinVL
+FROM [Production].[Product]
+WHERE ListPrice > 0;
+
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 18
 -- Some o TotalDue de todos os pedidos.
+SELECT SUM(TotalDue) AS Soma_total
+FROM [Sales].[SalesOrderHeader]
+WHERE TotalDue > 0;
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 19
 -- Conte o número total de clientes.
 
+SELECT COUNT(CustomerID) AS TotCli
+FROM [Sales].[Customer];
+
+SELECT COUNT(*) AS TotCli
+FROM [Sales].[Customer];
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 20
 -- Calcule a média de dias entre OrderDate e ShipDate.
+SELECT 
+    AVG(DATEDIFF(DAY, OrderDate, ShipDate)) AS Media_Dias
+FROM [Sales].[SalesOrderHeader]
+WHERE ShipDate IS NOT NULL;
+/*
+ ---------- Dica importante ----------
+
+Sempre que o problema envolver:
+
+- “diferença entre datas” → use DATEDIFF
+- “média” → use AVG
+- “por linha” → evite variáveis, use direto na tabela
+
+*/
+----------------------------------------------------------
+--************************ EXTRAS ************************
+----------------------------------------------------------
+-- Extra 1
+-- Calcule a quantidade de dias entre OrderDate e ShipDate para cada pedido.
+-- Exiba: SalesOrderID, OrderDate, ShipDate e a diferença em dias.
+SELECT 
+    SalesOrderID,
+    OrderDate,
+    ShipDate,
+    DATEDIFF(DAY, OrderDate, ShipDate) DIF_Days
+FROM [Sales].[SalesOrderHeader]
+WHERE ShipDate IS NOT NULL;
+
+-- Extra 2
+-- Liste os pedidos onde o tempo entre OrderDate e ShipDate foi maior que 7 dias.
+-- Exiba: SalesOrderID, datas e a diferença em dias.
+--Op1
+SELECT
+    SalesOrderID,
+    OrderDate,
+    ShipDate,
+    DATEDIFF(DAY, OrderDate, ShipDate) AS DIF_Days
+FROM [Sales].[SalesOrderHeader]
+WHERE DATEDIFF(DAY, OrderDate, ShipDate) > 7;
+
+--Op2
+WITH Pedidos AS (
+    SELECT
+        SalesOrderID,
+        OrderDate,
+        ShipDate,
+        DATEDIFF(DAY, OrderDate, ShipDate) AS DIF_Days
+    FROM [Sales].[SalesOrderHeader]
+)
+SELECT *
+FROM Pedidos
+WHERE DIF_Days > 7;
+
+
+-- Extra 3
+-- Calcule a média de dias entre OrderDate e DueDate (prazo) para todos os pedidos.
+-- Considere apenas registros com DueDate não nulo.
+SELECT 
+    AVG(DATEDIFF(DAY, OrderDate, DueDate)) AS Media_Dias
+FROM [Sales].[SalesOrderHeader]
+WHERE DueDate IS NOT NULL;
+
+
+-- Extra 4
+-- Encontre o pedido com o maior tempo (em dias) entre OrderDate e ShipDate.
+-- Exiba o SalesOrderID e a diferença de dias.
+WITH PED AS (
+    SELECT
+        SalesOrderID,
+        DATEDIFF(DAY, OrderDate, ShipDate) AS MaxTime
+    FROM [Sales].[SalesOrderHeader]
+    WHERE ShipDate IS NOT NULL
+)
+SELECT TOP 1 *
+FROM PED
+ORDER BY MaxTime DESC;
+/*
+Conceito-chave
+MAX() → retorna o maior valor
+TOP 1 ... ORDER BY DESC → retorna a linha completa com o maior valor
+
+👉 Quando o exercício pede “o registro”, quase sempre TOP + ORDER BY é o caminho.
+*/
+--Op2
+SELECT TOP 1
+    SalesOrderID,
+    DATEDIFF(DAY, OrderDate, ShipDate) AS MaxTime
+FROM [Sales].[SalesOrderHeader]
+WHERE ShipDate IS NOT NULL
+ORDER BY MaxTime DESC;
+
+-- Extra 5
+-- Calcule o tempo (em dias) entre a primeira e a última compra de cada cliente.
+-- Exiba: CustomerID e a diferença de dias entre MIN(OrderDate) e MAX(OrderDate).
+-- Ordene do maior para o menor intervalo.
+SELECT 
+    CustomerID,
+    DATEDIFF(
+        DAY,
+        MIN(OrderDate), --→ primeira compra
+        MAX(OrderDate) --→ última compra
+    ) AS DIF
+FROM [Sales].[SalesOrderHeader]
+GROUP BY CustomerID
+ORDER BY DIF DESC;
+
+/*
+🚀 Regra de ouro
+
+👉 Se o enunciado diz:
+
+    “de cada cliente”
+
+👉 Sempre precisa de:
+
+    GROUP BY CustomerID
+*/
+
+------------------------------------------------------------
 
 -- EXERCÍCIO 21
 -- Crie um script com duas partes separadas por GO:
 -- 1ª parte: declarar variável e atribuir valor
+DECLARE @ID INT;
+SET @ID = 16350;
+GO
 -- 2ª parte: utilizar a variável em uma consulta
+DECLARE @ID INT -- Redeclarar pois é encerrada após o GO acima
+SET @ID = 16350;
+
+SELECT 
+    CustomerID,
+    DATEDIFF(
+        DAY,
+        MIN(OrderDate),
+        MAX(OrderDate)
+    ) AS DIF
+FROM [Sales].[SalesOrderHeader]
+WHERE CustomerID = @ID
+GROUP BY CustomerID;
+GO
 
 ------------------------------------------------------------
 
@@ -365,15 +519,63 @@ ORDER BY YearOrder;
 -- Crie uma tabela temporária em um batch
 -- e tente utilizá-la em outro batch separado
 
+SELECT 
+    ProductID,
+    Name,
+    Color,
+    ProductSubcategoryID
+INTO #TempProduct
+FROM [Production].[Product]
+GO
+
+SELECT TOP 10 *
+FROM #TempProduct
+GO
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 23
 -- Declare variáveis em um batch e teste sua visibilidade após GO
 
+-- 1ª parte
+DECLARE @FirstName NVARCHAR(50) = 'Gigi';
+DECLARE @MiddleName NVARCHAR(50) = 'N';
+DECLARE @LastName NVARCHAR(50) = 'Matthew';
+GO
+
+-- 2ª parte (isso vai dar erro propositalmente)
+SELECT 
+    @FirstName,
+    @MiddleName,
+    @LastName
+FROM [Person].[Person];
+
+-- 👉 Resultado esperado: elas NÃO existem após GO
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 24
 -- Crie um procedimento armazenado em um batch separado
+CREATE PROCEDURE sp_SaleDetail
+    @IdProduto INT
+AS
+BEGIN
+    SELECT 
+        S.SalesOrderID AS IdVenda,
+        S.ProductID AS IdProduto,
+        P.Name AS Produto,
+        S.OrderQty AS Qtde,
+        S.UnitPrice AS VlUnidade,
+        S.LineTotal AS Tot_VlPago
+    FROM [Sales].[SalesOrderDetail] S
+    JOIN [Production].[Product] P 
+        ON S.ProductID = P.ProductID
+    WHERE S.ProductID = @IdProduto;
+END;
+GO
+
+DROP PROCEDURE sp_SaleDetail
+
 
 ------------------------------------------------------------
 
