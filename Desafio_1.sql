@@ -582,51 +582,101 @@ DROP PROCEDURE sp_SaleDetail
 -- EXERCÍCIO 25
 -- Teste múltiplos comandos separados por GO simulando execução em etapas
 
+SELECT
+    ProductID,
+    Name,
+    Color,
+    ProductSubcategoryID
+INTO #Aux_Product
+FROM [Production].[Product];
+GO
+
+SELECT * 
+FROM #Aux_Product
+WHERE Color LIKE '%Black%';
+GO
+
+
 -- EXERCÍCIO 26
 -- Use operadores aritméticos para calcular desconto sobre ListPrice.
+DECLARE @ID INT = 999
+
+SELECT 
+    ProductID,
+    Name,
+    (ListPrice - (ListPrice * 10/100)) AS Desconto
+FROM [Production].[Product]
+WHERE ProductID = @ID
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 27
 -- Use operadores de comparação para filtrar produtos com preço > 500.
+SELECT 
+    ProductID,
+    Name
+FROM [Production].[Product]
+WHERE ListPrice > 500;
+
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 28
 -- Use operadores lógicos (AND/OR) para filtrar produtos por cor e preço.
 
+SELECT
+    ProductID,
+    Name,
+    ListPrice
+FROM [Production].[Product]
+WHERE ListPrice > 500 AND Color LIKE '%Black%';
+
+SELECT
+    ProductID,
+    Name,
+    ListPrice
+FROM [Production].[Product]
+WHERE ListPrice <= 500 OR Color LIKE '%Red%';
+
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 29
 -- Use operador LIKE para buscar nomes que contenham 'Bike'.
+SELECT
+    ProductID,
+    Name
+FROM [Production].[Product]
+WHERE Name LIKE '%Bike%'
+ORDER BY ProductID;
 
 ------------------------------------------------------------
 
 -- EXERCÍCIO 30
 -- Use operador IN para filtrar múltiplos ProductID.
+SELECT 
+    *
+INTO #DetalhesVenda
+FROM [Sales].[SalesOrderDetail];
+GO
 
--- EXERCÍCIO 31
--- Monte uma query dinâmica para buscar produtos por preço mínimo.
+-- IN
+SELECT 
+    ProductID,
+    Name
+FROM [Production].[Product]
+WHERE ProductID IN (
+    SELECT ProductID FROM #DetalhesVenda
+);
 
-------------------------------------------------------------
-
--- EXERCÍCIO 32
--- Use sp_executesql para executar uma consulta com parâmetro.
-
-------------------------------------------------------------
-
--- EXERCÍCIO 33
--- Crie uma query dinâmica que filtre produtos por nome.
-
-------------------------------------------------------------
-
--- EXERCÍCIO 34
--- Monte dinamicamente um ORDER BY com base em variável.
-
-------------------------------------------------------------
-
--- EXERCÍCIO 35
--- Crie uma query dinâmica que selecione colunas dinamicamente
+-- NOT IN
+SELECT 
+    ProductID,
+    Name
+FROM [Production].[Product]
+WHERE ProductID NOT IN (
+    SELECT ProductID FROM #DetalhesVenda
+);
 
 --************************************************************************
 -- BONUS
@@ -640,6 +690,27 @@ DROP PROCEDURE sp_SaleDetail
 -- Caso esteja entre 1.000.000 e 2.000.000, exiba "Bônus médio".
 -- Caso contrário, exiba "Sem bônus".
 
+DECLARE @TotVendas MONEY
+DECLARE @Vendedor INT = 280
+
+SELECT @TotVendas = SalesYTD
+FROM [Sales].[SalesPerson]
+WHERE BusinessEntityID = @Vendedor
+AND SalesYTD IS NOT NULL;
+
+IF @TotVendas > 2000000
+BEGIN
+    PRINT 'BONUS MÁXIMO';
+END
+ELSE IF @TotVendas BETWEEN 1000000 AND 2000000
+BEGIN
+    PRINT 'BONUS MÉDIO';
+END
+ELSE
+BEGIN
+    PRINT 'SEM BONUS';
+END
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 2 - ORDER BY
@@ -648,6 +719,14 @@ DROP PROCEDURE sp_SaleDetail
 -- Liste os produtos da tabela Production.Product mostrando Name, ListPrice e SellStartDate.
 -- Ordene os resultados primeiro pelo preço (decrescente) e, em caso de empate,
 -- pela data de início de venda (mais antiga primeiro).
+
+SELECT
+    Name,
+    ListPrice,
+    SellStartDate
+FROM [Production].[Product]
+ORDER BY ListPrice DESC, SellStartDate;
+
 
 ------------------------------------------------------------
 
@@ -658,6 +737,16 @@ DROP PROCEDURE sp_SaleDetail
 -- Exiba o total de pedidos por território.
 -- Considere apenas pedidos realizados após o ano de 2012.
 
+SELECT
+    S.TerritoryID As ID,
+    T.Name AS Territorio,
+    COUNT(S.SalesOrderID) AS QtPedidos
+FROM [Sales].[SalesOrderHeader] S
+JOIN [Sales].[SalesTerritory] T ON S.TerritoryID = T.TerritoryID
+WHERE YEAR(OrderDate) > 2012
+GROUP BY S.TerritoryID,T.Name
+ORDER BY ID;
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 4 - FUNÇÕES DE AGREGAÇÃO
@@ -665,6 +754,23 @@ DROP PROCEDURE sp_SaleDetail
 -- Enunciado:
 -- Calcule o preço médio, o maior preço e o menor preço dos produtos da tabela Production.Product.
 -- Considere apenas produtos ativos (SellEndDate NULL).
+
+SELECT 
+    AVG(ListPrice) AS PrecoMedio,
+    MAX(ListPrice) AS MaiorPreco,
+    MIN(ListPrice) AS MenorPreco
+FROM [Production].[Product]
+WHERE SellEndDate IS NULL;
+
+-- SEM VALOR ZERADO
+SELECT 
+    AVG(ListPrice) AS PrecoMedio,
+    MAX(ListPrice) AS MaiorPreco,
+    MIN(ListPrice) AS MenorPreco
+FROM [Production].[Product]
+WHERE SellEndDate IS NULL
+AND ListPrice > 0;
+
 
 ------------------------------------------------------------
 
