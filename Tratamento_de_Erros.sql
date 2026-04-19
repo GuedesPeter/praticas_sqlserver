@@ -61,3 +61,30 @@ SQL SERVER - TRATAMENTO DE ERROS E CONTROLE DE TRANSAÇÕES
 -- A atualização deve ser feita dentro de uma transação, e caso ocorra um erro durante a execução, 
 -- a transação deve ser revertida com ROLLBACK. Se não houver erro, o código deve realizar o COMMIT. 
 -- Certifique-se de capturar o erro com TRY...CATCH e garantir que a transação seja tratada corretamente.
+
+-- 11. Exercício: Transação com múltiplos INSERTs dependentes
+-- Descrição: Crie um bloco de código que insira um novo cliente na tabela [Sales].[Customer] 
+-- e, em seguida, insira um endereço correspondente na tabela [Person].[Address]. 
+-- As duas operações devem ocorrer dentro de uma única transação. 
+-- Caso a inserção do endereço falhe, a inserção do cliente também deve ser revertida com ROLLBACK.
+
+-- 12. Exercício: Transação com UPDATE condicionado
+-- Descrição: Crie uma transação que atualize o preço dos produtos na tabela [Production].[Product] 
+-- aumentando 10%. Antes de realizar o COMMIT, verifique se algum produto ficou com preço maior que 10000. 
+-- Caso isso ocorra, a transação deve ser revertida com ROLLBACK.
+
+-- 13. Exercício: Transação com DELETE em cascata manual
+-- Descrição: Crie um bloco de código que exclua um cliente da tabela [Sales].[Customer] 
+-- e todos os seus pedidos na tabela [Sales].[SalesOrderHeader]. 
+-- As exclusões devem ocorrer dentro de uma transação. 
+-- Caso alguma exclusão falhe, todas as operações devem ser revertidas.
+
+-- 14. Exercício: Transação com validação de quantidade
+-- Descrição: Crie uma transação que atualize a quantidade em estoque na tabela [Production].[ProductInventory]. 
+-- Antes de confirmar, verifique se a quantidade não ficou negativa. 
+-- Caso algum registro fique com valor menor que zero, execute ROLLBACK e gere uma mensagem de erro.
+
+-- 15. Exercício: Transação com INSERT e UPDATE combinados
+-- Descrição: Crie uma transação que insira um novo produto na tabela [Production].[Product] 
+-- e atualize a tabela [Production].[ProductSubcategory] incrementando um contador de produtos. 
+-- Se qualquer uma das operações falhar, a transação deve ser revertida com ROLLBACK.
