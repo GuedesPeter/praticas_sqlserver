@@ -783,6 +783,45 @@ AND ListPrice > 0;
 -- Separe o script em batches utilizando GO.
 -- Inclua operadores de comparação na construção da query dinâmica.
 
+DECLARE @Valor MONEY = 2400;
+DECLARE @SqlQuery NVARCHAR(300);
+
+SET @SqlQuery = '
+    SELECT 
+    ProductID,
+    Name,
+    ListPrice
+FROM [Production].[Product]
+WHERE ListPrice >=' + STR(@Valor);
+
+EXEC sp_executesql @SqlQuery;
+GO
+
+--Observação
+--sp_executesql É muito usado para filtros dinâmicos
+--Você pode ter 2, 5, 10, 20 parâmetros
+
+--Resumindo:
+--👉 Voce pode ter quantos parâmetros customizáveis forem necessários.
+
+-- Boa Prática
+DECLARE @Valor MONEY = 2400;
+DECLARE @SqlQuery NVARCHAR(MAX);
+
+SET @SqlQuery = '
+SELECT 
+    ProductID,
+    Name,
+    ListPrice
+FROM [Production].[Product]
+WHERE ListPrice >= @Preco';
+
+EXEC sp_executesql 
+    @SqlQuery,           -- query dinâmica
+    N'@Preco MONEY',     -- declaração dos parâmetros
+    @Preco = @Valor      -- valor enviado
+GO
+
 
 --************************************************************************
 -- VARIADOS
@@ -796,6 +835,26 @@ AND ListPrice > 0;
 -- Converta a data OrderDate para o formato DD/MM/YYYY utilizando CONVERT.
 -- Nomeie a coluna formatada como DataFormatada.
 
+SELECT 
+    SalesOrderID,
+    CONVERT(VARCHAR(10),OrderDate,103) AS DataFormatada
+FROM [Sales].[SalesOrderHeader];
+
+-- NOTA do Exercicio:
+-- SINTAXE: CONVERT(VARCHAR(tamanho), data, estilo)
+
+-- ESTILOS DE DATA MAIS UTILIZADOS NO CONVERT (SQL SERVER)
+-- 101 = MM/DD/YYYY   (EUA)          -> 04/21/2026
+-- 103 = DD/MM/YYYY   (BRASIL)       -> 21/04/2026
+-- 105 = DD-MM-YYYY                  -> 21-04-2026
+-- 110 = MM-DD-YYYY                  -> 04-21-2026
+-- 112 = YYYYMMDD                    -> 20260421
+-- 120 = YYYY-MM-DD HH:MI:SS (ISO)   -> 2026-04-21 14:30:00
+-- 121 = YYYY-MM-DD HH:MI:SS.MMM     -> 2026-04-21 14:30:00.123
+-- 126 = YYYY-MM-DDTHH:MI:SS         -> 2026-04-21T14:30:00
+-- 130 = DD MON YYYY HH:MI:SS        -> 21 APR 2026 14:30:00
+
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 2 - FORMAT (Formatação monetária)
@@ -805,6 +864,26 @@ AND ListPrice > 0;
 -- Liste SalesOrderID e TotalDue da tabela Sales.SalesOrderHeader.
 -- Utilize FORMAT para exibir o TotalDue no formato de moeda brasileira (R$).
 
+SELECT
+    SalesOrderID,
+    FORMAT(TotalDue,'C','pt-BR') AS Valor
+FROM [Sales].[SalesOrderHeader];
+
+-- NOTA do Exercicio:
+-- FORMAT(valor, formato, [cultura]) -- SINTAXE
+
+-- FORMAT - ESTILOS DE MOEDA MAIS USADOS
+-- 'C'  -> Moeda padrão da cultura (ex: pt-BR = R$ 1.234,56)
+-- 'C0' -> Moeda sem casas decimais
+-- 'C2' -> Moeda com 2 casas decimais (padrão)
+-- 'N'  -> Número com separador de milhar (sem símbolo)
+-- 'N2' -> Número com 2 casas decimais
+-- 'P'  -> Porcentagem (ex: 0.25 = 25,00 %)
+
+-- EXEMPLOS:
+-- FORMAT(1234.56, 'C', 'pt-BR')  -> R$ 1.234,56
+-- FORMAT(1234.56, 'C', 'en-US')  -> $1,234.56
+-- FORMAT(1234.56, 'N2', 'pt-BR') -> 1.234,56
 ------------------------------------------------------------
 
 -- EXERCÍCIO 3 - COALESCE (Tratamento de NULL)
@@ -813,6 +892,20 @@ AND ListPrice > 0;
 -- Enunciado:
 -- Consulte a tabela Person.Person e exiba FirstName, MiddleName e LastName.
 -- Utilize COALESCE para substituir valores NULL de MiddleName por 'Não informado'.
+
+SELECT
+    FirstName AS FName,
+    COALESCE(MiddleName,'Não informado') AS MName,
+    LastName AS LName
+FROM [Person].[Person];
+
+-- NOTA do Exercicio:
+-- SINTAXE:COALESCE(valor1, valor2, valor3, ...)
+--Como funciona
+--O SQL Server verifica da esquerda → direita
+--Retorna o primeiro valor não NULL
+--Se todos forem NULL → retorna NULL
+
 
 ------------------------------------------------------------
 
@@ -823,6 +916,49 @@ AND ListPrice > 0;
 -- Consulte Production.Product e retorne Name e ListPrice.
 -- Converta o ListPrice para texto usando STR, com 2 casas decimais.
 
+SELECT
+    Name,
+    STR(ListPrice,10,2) AS Valor
+FROM [Production].[Product];
+--OU
+SELECT
+    Name,
+    LTRIM(STR(ListPrice,10,2)) AS Valor -- Elimina espaços à Esquerda gerados pelo STR
+FROM Production.Product;
+
+-- Ex. Valores sem preço zerado
+SELECT
+    Name,
+    STR(ListPrice,10,2) AS Valor
+FROM [Production].[Product]
+WHERE ListPrice > 0;
+--OU
+SELECT
+    Name,
+    LTRIM(STR(ListPrice,10,2)) AS Valor -- Elimina espaços à Esquerda gerados pelo STR
+FROM Production.Product
+WHERE ListPrice > 0;
+
+-- Ex. Em caso de conversão para moeda
+SELECT
+    Name,
+    FORMAT(ListPrice,'C','pt-BR') AS Valor
+FROM [Production].[Product]
+WHERE ListPrice > 0;
+
+-- NOTA do Exercicio:
+-- SINTAXE: STR(numero, [tamanho], [casas_decimais])
+--Parâmetros
+--numero → valor numérico a converter
+--tamanho → (opcional) tamanho total da string
+--casas_decimais → (opcional) quantidade de casas decimais
+
+--Observações importantes
+--STR preenche com espaços à esquerda
+--Retorna VARCHAR
+--Arredonda valores decimais
+--Não é muito usado hoje (CAST/CONVERT são mais comuns)
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 5 - CONCAT (Junção de campos)
@@ -831,6 +967,16 @@ AND ListPrice > 0;
 -- Enunciado:
 -- Na tabela Person.Person, concatene FirstName, MiddleName e LastName.
 -- Trate possíveis NULLs para evitar espaços extras.
+SELECT
+    LTRIM(RTRIM(
+        CONCAT(
+            COALESCE(FirstName,''),' ',
+            COALESCE(MiddleName,''),' ',
+            COALESCE(LastName,'')
+        )
+    )) AS FullName
+FROM Person.Person;
+
 
 ------------------------------------------------------------
 
@@ -838,7 +984,21 @@ AND ListPrice > 0;
 -- Contexto:
 -- O sistema exige padronização de dados textuais.
 -- Enunciado:
--- Consulte Production.Product e exiba Name em maiúsculo e minúsculo.
+-- Consulte Production.Product e exiba Name em maiúsculo e Color em minúsculo.
+SELECT
+    UPPER(Name) AS U_Name,
+    LOWER(COALESCE(Color,'n/a')) AS L_Color
+FROM [Production].[Product]
+ORDER BY U_Name;
+
+-- Versão sem Cores Nulas
+SELECT
+    UPPER(Name) AS U_Name,
+    LOWER(Color) AS L_Color
+FROM [Production].[Product]
+WHERE Color IS NOT NULL
+ORDER BY U_Name;
+
 
 ------------------------------------------------------------
 
@@ -848,6 +1008,25 @@ AND ListPrice > 0;
 -- Enunciado:
 -- Retorne Name e o tamanho do nome utilizando LEN.
 
+-- Com espaços
+SELECT
+    Name,
+    LEN(Name) AS LEN_Name
+FROM [Production].[Product]
+WHERE LEN(Name) > 0 
+ORDER BY LEN_Name;
+
+-- Sem espaços
+SELECT
+    Name,
+    LEN(TRIM(Name)) AS LEN_Name
+FROM [Production].[Product]
+WHERE LEN(TRIM(Name)) > 0 
+ORDER BY LEN_Name;
+
+-- Nota do Exercicio:
+-- LEN(Name) → ignora espaços à direita por isso boa prática usar o TRIM
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 8 - SUBSTRING (Extração de texto)
@@ -855,6 +1034,16 @@ AND ListPrice > 0;
 -- Criar códigos abreviados de produtos.
 -- Enunciado:
 -- Extraia os primeiros 4 caracteres do campo Name da tabela Production.Product.
+SELECT
+    Name,
+    SUBSTRING(Name, 1, 4) AS StrName
+FROM Production.Product;
+
+--Nota do Exercico
+-- SINTAXE: SUBSTRING(expressao, posicao_inicial, quantidade)
+--expressao → texto ou coluna
+--posicao_inicial → onde começa (base 1)
+--quantidade → quantos caracteres extrair
 
 ------------------------------------------------------------
 
@@ -863,6 +1052,25 @@ AND ListPrice > 0;
 -- Relatórios por período.
 -- Enunciado:
 -- Extraia o ano e o mês da coluna OrderDate na tabela Sales.SalesOrderHeader.
+--Op1
+SELECT
+    CONVERT(VARCHAR(10),OrderDate,103) AS DtOrder,
+    CONCAT(DATEPART(YEAR,OrderDate),'/',DATEPART(MONTH,OrderDate)) AS AnoMes
+FROM [Sales].[SalesOrderHeader];
+
+--Op2
+SELECT
+    CONVERT(VARCHAR(10),OrderDate,103) AS DtOrder,
+    DATEPART(YEAR,OrderDate) AS Ano,
+    DATEPART(MONTH,OrderDate) AS Mes
+FROM [Sales].[SalesOrderHeader];
+
+--Op3. Mes com zero
+SELECT
+    CONVERT(VARCHAR(10),OrderDate,103) AS DtOrder,
+    FORMAT(OrderDate,'yyyy/MM') AS AnoMes
+FROM Sales.SalesOrderHeader;
+
 
 ------------------------------------------------------------
 
@@ -872,6 +1080,14 @@ AND ListPrice > 0;
 -- Enunciado:
 -- Calcule a diferença em dias entre OrderDate e ShipDate.
 
+SELECT
+    CONVERT(VARCHAR(10),OrderDate,103) AS DtOrder,
+    CONVERT(VARCHAR(10),ShipDate,103) AS DtShip,
+    DATEDIFF(DAY, OrderDate, ShipDate) AS TempoEntregaDias
+FROM Sales.SalesOrderHeader
+WHERE ShipDate IS NOT NULL;
+
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 11 - ISNULL (Substituição de NULL)
@@ -879,6 +1095,26 @@ AND ListPrice > 0;
 -- Alguns produtos não possuem peso informado.
 -- Enunciado:
 -- Substitua valores NULL da coluna Weight por 0 na tabela Production.Product.
+--Op1
+SELECT
+    ProductID AS IdProduto,
+    Name AS Nome,
+    ISNULL(Weight,0) AS PesoKg
+FROM Production.Product;
+
+--Op2
+SELECT
+    ProductID As IdProduto,
+    Name AS Nome,
+    CONCAT('Kg ', ISNULL(Weight,0)) AS PesoKg
+FROM Production.Product;
+
+--OP3 COALESCE
+SELECT 
+    ProductID As IdProduto, 
+    Name AS Nome, 
+    CONCAT('Kg ',COALESCE(Weight,0)) AS PesoKg 
+FROM [Production].[Product];
 
 ------------------------------------------------------------
 
@@ -888,6 +1124,21 @@ AND ListPrice > 0;
 -- Enunciado:
 -- Converta ListPrice para inteiro usando CAST.
 
+SELECT
+    ProductID,
+    Name,
+    CAST(ListPrice AS INT) AS Price
+FROM [Production].[Product];
+
+-- Valore acima de zero
+SELECT
+    ProductID,
+    Name,
+    CAST(ListPrice AS INT) AS Price
+FROM [Production].[Product]
+WHERE ListPrice > 0;
+
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 13 - ROUND (Arredondamento)
@@ -896,6 +1147,23 @@ AND ListPrice > 0;
 -- Enunciado:
 -- Arredonde ListPrice para 1 casa decimal.
 
+SELECT
+    ProductID,
+    Name,
+    ROUND(ListPrice,1) AS Price
+FROM [Production].[Product]
+WHERE ListPrice > 0;
+
+--Nota do Exercicio
+--SINTAXE:ROUND(numero, casas_decimais [, operacao])
+
+--Parâmetros
+--numero → valor a arredondar
+--casas_decimais → quantas casas manter
+--operacao (opcional):
+-- 0 ou omitido → arredonda
+-- 1 → trunca (corta sem arredondar)
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 14 - CEILING e FLOOR (Arredondamentos específicos)
@@ -903,6 +1171,39 @@ AND ListPrice > 0;
 -- Simular cenários de arredondamento.
 -- Enunciado:
 -- Aplique CEILING (para cima) e FLOOR (para baixo) sobre ListPrice.
+--Op1 CEILING
+SELECT
+    ProductID,
+    FORMAT(ListPrice,'C','pt-BR') PrecoAtual,
+    FORMAT(CEILING(ListPrice),'C','pt-BR') AS PrecoAcima
+FROM [Production].[Product]
+WHERE ListPrice > 0;
+
+--Op2 FLOOR
+SELECT
+    ProductID,
+    FORMAT(ListPrice,'C','pt-BR') PrecoAtual,
+    FORMAT(FLOOR(ListPrice),'C','pt-BR') AS PrecoAbaixo
+FROM [Production].[Product]
+WHERE ListPrice > 0;
+
+--Op3 Panorama Geral
+SELECT
+    ProductID,
+    FORMAT(ListPrice,'C','pt-BR') PrecoAtual,
+    FORMAT(CEILING(ListPrice),'C','pt-BR') AS PrecoAcima,
+    FORMAT(FLOOR(ListPrice),'C','pt-BR') AS PrecoAbaixo
+FROM [Production].[Product]
+WHERE ListPrice > 0;
+
+--Op4 Com zerados
+SELECT
+    ProductID,
+    FORMAT(ListPrice,'C','pt-BR') PrecoAtual,
+    FORMAT(CEILING(ListPrice),'C','pt-BR') AS PrecoAcima,
+    FORMAT(FLOOR(ListPrice),'C','pt-BR') AS PrecoAbaixo
+FROM [Production].[Product];
+
 
 ------------------------------------------------------------
 
@@ -914,6 +1215,47 @@ AND ListPrice > 0;
 -- Até 100 → 'Barato'
 -- 101 a 1000 → 'Intermediário'
 -- Acima de 1000 → 'Caro'
+--Op1 Sem produtos zerados
+SELECT
+    ProductID,
+    Name AS Nome,
+    FORMAT(ListPrice,'C','pt-BR') AS PrecoAtual,
+    CASE
+      WHEN ListPrice <= 100 THEN 'Barato'
+      WHEN ListPrice <= 1000 THEN 'Intermediário'
+      ELSE 'Caro'
+    END AS StatusValor
+FROM [Production].[Product]
+WHERE ListPrice > 0;
+
+--Op2 Com produtos zerado
+SELECT
+    ProductID,
+    Name AS Nome,
+    FORMAT(ListPrice,'C','pt-BR') AS PrecoAtual,
+    CASE
+       WHEN ListPrice <= 100 THEN 'Barato'
+       WHEN ListPrice <= 1000 THEN 'Intermediário'
+       ELSE 'Caro'
+    END AS StatusValor
+FROM [Production].[Product];
+
+--Op3 Analise agrupada
+
+SELECT
+    CASE
+        WHEN ListPrice <= 100 THEN 'Barato'
+        WHEN ListPrice <= 1000 THEN 'Intermediário'
+        ELSE 'Caro'
+    END AS StatusValor,
+    COUNT(*) AS Quantidade
+FROM Production.Product
+GROUP BY
+    CASE
+        WHEN ListPrice <= 100 THEN 'Barato'
+        WHEN ListPrice <= 1000 THEN 'Intermediário'
+        ELSE 'Caro'
+    END;
 
 ------------------------------------------------------------
 
@@ -923,6 +1265,14 @@ AND ListPrice > 0;
 -- Enunciado:
 -- Liste produtos cujo nome contenha a palavra 'Road'.
 
+SELECT
+    ProductID,
+    Name
+FROM [Production].[Product]
+WHERE Name LIKE '%Road%'
+ORDER BY ProductID;
+
+
 ------------------------------------------------------------
 
 -- EXERCÍCIO 17 - IN (Filtro múltiplo)
@@ -930,6 +1280,19 @@ AND ListPrice > 0;
 -- Filtrar registros específicos.
 -- Enunciado:
 -- Consulte Sales.SalesOrderHeader filtrando múltiplos CustomerID.
+SELECT
+    SalesOrderID,
+    CustomerID,
+    OrderDate
+FROM Sales.SalesOrderHeader
+WHERE CustomerID IN (
+     29825
+    ,29994
+    ,29734
+    ,29672
+)
+ORDER BY CustomerID, OrderDate;
+
 
 ------------------------------------------------------------
 
@@ -937,7 +1300,24 @@ AND ListPrice > 0;
 -- Contexto:
 -- Filtrar produtos por faixa de preço.
 -- Enunciado:
--- Liste produtos com preço entre 200 e 800.
+-- Liste produtos com preço entre 1200 e 3500.
+--Op1
+SELECT
+    ProductID,
+    Name,
+    FORMAT(ListPrice,'C','pt-BR') AS Price
+FROM [Production].[Product]
+WHERE ListPrice BETWEEN 1200 AND 3500
+ORDER BY Price;
+
+--Op2
+SELECT
+    ProductID,
+    Name,
+    CONVERT(VARCHAR(20), CAST(ListPrice AS MONEY), 1) AS Price
+FROM Production.Product
+WHERE ListPrice BETWEEN 1200 AND 3500
+ORDER BY ListPrice;
 
 ------------------------------------------------------------
 
@@ -947,6 +1327,31 @@ AND ListPrice > 0;
 -- Enunciado:
 -- Faça um JOIN entre Sales.Customer e Sales.SalesOrderHeader.
 -- Exiba CustomerID e SalesOrderID.
+--Op1
+SELECT
+    C.CustomerID,
+    O.SalesOrderID
+FROM [Sales].[Customer] C
+JOIN [Sales].[SalesOrderHeader] O ON C.CustomerID = O.CustomerID;
+
+-- Op2 Analisando a quantidade de pedidos por CustomerID
+SELECT
+    C.CustomerID,
+    COUNT(O.SalesOrderID) AS Qtde
+FROM [Sales].[Customer] C
+JOIN [Sales].[SalesOrderHeader] O ON C.CustomerID = O.CustomerID
+GROUP BY C.CustomerID
+
+--Op3 Inclui clientes sem pedidos [LEFT JOIN]
+SELECT
+    C.CustomerID,
+    COUNT(O.SalesOrderID) AS Qtde
+FROM Sales.Customer C
+LEFT JOIN Sales.SalesOrderHeader O 
+    ON C.CustomerID = O.CustomerID
+GROUP BY C.CustomerID
+ORDER BY Qtde DESC;
+
 
 ------------------------------------------------------------
 
@@ -955,3 +1360,13 @@ AND ListPrice > 0;
 -- Identificar clientes com alta atividade.
 -- Enunciado:
 -- Agrupe pedidos por CustomerID e exiba apenas clientes com mais de 10 pedidos.
+
+SELECT
+    C.CustomerID,
+    COUNT(O.SalesOrderID) AS Qtde
+FROM Sales.Customer C
+JOIN Sales.SalesOrderHeader O 
+    ON C.CustomerID = O.CustomerID
+GROUP BY C.CustomerID
+HAVING COUNT(O.SalesOrderID) > 10
+ORDER BY Qtde DESC;
