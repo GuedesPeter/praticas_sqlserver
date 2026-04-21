@@ -15,6 +15,80 @@ SQL SERVER - TRATAMENTO DE ERROS E CONTROLE DE TRANSAÇÕES
 -- uma mensagem personalizada de erro deve ser retornada.
 -- Utilize TRY...CATCH para capturar qualquer erro durante a inserção e retornar uma mensagem apropriada.
 
+CREATE OR ALTER PROCEDURE sp_InsertProduct
+    @ProductNumber NVARCHAR(25)
+AS
+BEGIN
+    SET NOCOUNT ON; -- Evita mensagens desnecessárias
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        IF EXISTS (
+            SELECT 1
+            FROM Production.Product
+            WHERE ProductNumber = @ProductNumber
+        )
+        BEGIN
+            THROW 50001, 'ProductNumber já existe.', 1;
+        END
+
+        INSERT INTO Production.Product
+        (
+            Name,
+            ProductNumber,
+            MakeFlag,
+            FinishedGoodsFlag,
+            SafetyStockLevel,
+            ReorderPoint,
+            StandardCost,
+            ListPrice,
+            DaysToManufacture,
+            SellStartDate,
+            rowguid,
+            ModifiedDate
+        )
+        VALUES
+        (
+            'Road-750 Black, 100',
+            @ProductNumber,
+            0,
+            1,
+            100,
+            50,
+            10.00,
+            25.99,
+            0,
+            GETDATE(),
+            NEWID(),
+            GETDATE()
+        );
+
+        COMMIT;
+
+        PRINT 'Produto inserido com sucesso';
+
+    END TRY
+    BEGIN CATCH
+
+        IF @@TRANCOUNT > 0
+            ROLLBACK;
+
+        PRINT 'Erro ao inserir produto';
+        PRINT ERROR_MESSAGE();
+
+    END CATCH
+END
+
+-- Executando 
+EXEC sp_InsertProduct 'TESTE_BK-R100';
+
+-- Validando
+SELECT * FROM [Production].[Product]
+WHERE ProductNumber LIKE '%TESTE_BK-R100%';
+
+
+
 -- 2. Exercício: Validando NULL em dados inseridos
 -- Descrição: Crie uma consulta que atualize os dados de um cliente na tabela [Sales].[Customer]. 
 -- Antes de realizar a atualização, valide se o campo [EmailAddress] não é NULL. Se for NULL, a operação de atualização 
