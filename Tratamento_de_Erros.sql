@@ -89,10 +89,52 @@ WHERE ProductNumber LIKE '%TESTE_BK-R100%';
 
 
 
--- 2. Exercício: Validando NULL em dados inseridos
--- Descrição: Crie uma consulta que atualize os dados de um cliente na tabela [Sales].[Customer]. 
--- Antes de realizar a atualização, valide se o campo [EmailAddress] não é NULL. Se for NULL, a operação de atualização 
--- deve ser interrompida e uma mensagem de erro deve ser exibida para o usuário, usando TRY...CATCH.
+-- =========================================
+-- EXERCÍCIO 2 - Validando NULL em dados inseridos (AJUSTADO)
+-- Contexto:
+-- Atualização de dados de clientes com validação de informações obrigatórias.
+-- Enunciado:
+-- Crie uma consulta que atualize os dados de um cliente na tabela Sales.Customer.
+-- Antes de realizar a atualização, valide se o cliente possui EmailAddress cadastrado.
+-- Para isso, utilize JOIN com a tabela Person.EmailAddress.
+-- Caso o EmailAddress seja NULL ou inexistente, a operação de atualização deve ser interrompida
+-- e uma mensagem de erro deve ser exibida ao usuário utilizando TRY...CATCH.
+-- CLIENTE 170 PARA TERRITORYID 1
+DECLARE @CLI INT = 170;
+
+BEGIN TRY
+    SET NOCOUNT ON;
+    BEGIN TRAN;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM Sales.Customer S
+        JOIN Person.EmailAddress P 
+            ON P.BusinessEntityID = S.PersonID
+        WHERE S.CustomerID = @CLI
+    )
+    BEGIN
+        THROW 50001, 'Cliente sem EmailAddress - UPDATE não permitido.', 1;
+    END
+
+    UPDATE Sales.Customer
+    SET TerritoryID = 1
+    WHERE CustomerID = @CLI
+      AND TerritoryID <> 1;
+
+    COMMIT;
+
+    PRINT 'UPDATE REALIZADO!';
+
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0
+        ROLLBACK;
+
+    PRINT ERROR_MESSAGE();
+END CATCH
+
+
 
 -- 3. Exercício: Usando ROLLBACK em transações com erro
 -- Descrição: Crie um bloco de código que insira dados na tabela [Production].[Product] e [Production].[ProductSubcategory]. 
