@@ -140,6 +140,92 @@ END CATCH
 -- Descrição: Crie um bloco de código que insira dados na tabela [Production].[Product] e [Production].[ProductSubcategory]. 
 -- Se a inserção na tabela [ProductSubcategory] falhar (por exemplo, devido a violação de chave estrangeira), 
 -- a transação inteira deve ser revertida com um ROLLBACK e um erro apropriado deve ser gerado usando TRY...CATCH.
+SET NOCOUNT ON;
+
+BEGIN TRY
+    BEGIN TRAN;
+
+    DECLARE @SubcategoryID INT;
+
+    -- 1. Validar se categoria existe
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM Production.ProductCategory 
+        WHERE ProductCategoryID = 1
+    )
+    BEGIN
+        THROW 50001, 'Categoria não existe.', 1;
+    END
+
+    -- 2. Inserir subcategoria
+    INSERT INTO Production.ProductSubcategory
+    (
+        ProductCategoryID,
+        Name,
+        rowguid,
+        ModifiedDate
+    )
+    VALUES
+    (
+        1,
+        'Subcategoria Teste SQL',
+        NEWID(),
+        GETDATE()
+    );
+
+    -- 3. Recuperar ID gerado
+    SET @SubcategoryID = SCOPE_IDENTITY();
+
+    -- 4. Inserir produto
+    INSERT INTO Production.Product
+    (
+        Name,
+        ProductNumber,
+        MakeFlag,
+        FinishedGoodsFlag,
+        Color,
+        SafetyStockLevel,
+        ReorderPoint,
+        StandardCost,
+        ListPrice,
+        DaysToManufacture,
+        SellStartDate,
+        ProductSubcategoryID,
+        rowguid,
+        ModifiedDate
+    )
+    VALUES
+    (
+        'Produto Teste SQL',
+        'SQL-TEST-001',
+        0,
+        1,
+        'Black',
+        100,
+        50,
+        10.00,
+        25.99,
+        0,
+        GETDATE(),
+        @SubcategoryID,
+        NEWID(),
+        GETDATE()
+    );
+
+    COMMIT;
+
+    PRINT 'INSERT OK!';
+
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0
+        ROLLBACK;
+
+    PRINT 'ERRO!';
+    PRINT ERROR_MESSAGE();
+END CATCH;
+
+
 
 -- 4. Exercício: Verificação de NULL em condições de atualização
 -- Descrição: Crie uma consulta que atualize o preço de todos os produtos na tabela [Production].[Product] 
