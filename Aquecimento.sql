@@ -531,7 +531,6 @@ WHERE EXISTS (
 
 -- 2) GROUP BY
 -- Conte pedidos por CustomerID
-
 SELECT
 	COUNT(SalesOrderID) AS QtPedidos,
 	CustomerID
@@ -541,7 +540,6 @@ ORDER BY QtPedidos DESC;
 
 -- 3) HAVING
 -- Liste clientes com mais de 5 pedidos
-
 SELECT
 	CustomerID,
 	COUNT(SalesOrderID) AS QtPedidos
