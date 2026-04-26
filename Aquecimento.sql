@@ -519,7 +519,6 @@ ORDER BY T.TerritoryID, YearDt;
 
 -- 1) EXISTS
 -- Liste clientes que possuem pedidos após 2012
-
 SELECT
 	C.CustomerID
 FROM [Sales].[Customer] C
