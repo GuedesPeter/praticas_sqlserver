@@ -253,3 +253,106 @@ END CATCH;
 -- - Se qualquer validação falhar → THROW
 -- - Se qualquer erro acontecer → ROLLBACK
 -- - Se tudo ok → COMMIT + mensagem de sucesso
+
+
+CREATE OR ALTER PROCEDURE sp_InsertProductCompleto
+    @ProductNumber NVARCHAR(25),
+    @ProductName NVARCHAR(300),
+    @ListPrice MONEY,
+    @ProductCategoryID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @SubcategoryID INT;
+
+        -- 1. Validar se categoria existe
+        IF NOT EXISTS (
+            SELECT 1 
+            FROM Production.ProductCategory
+            WHERE ProductCategoryID = @ProductCategoryID
+        )
+        BEGIN
+            THROW 50001, 'ProductCategoryID NÃO EXISTE!', 1;
+        END
+
+        -- 2. Validar duplicidade
+        IF EXISTS (
+            SELECT 1 
+            FROM Production.Product
+            WHERE ProductNumber = @ProductNumber
+        )
+        BEGIN
+            THROW 50002, 'ProductNumber JÁ EXISTE!', 1;
+        END
+
+        -- 3. Inserir Subcategoria
+        INSERT INTO Production.ProductSubcategory
+        (
+            ProductCategoryID,
+            Name,
+            rowguid,
+            ModifiedDate
+        )
+        VALUES
+        (
+            @ProductCategoryID,
+            CONCAT('Subcat - ', @ProductName),
+            NEWID(),
+            GETDATE()
+        );
+
+        SET @SubcategoryID = SCOPE_IDENTITY();
+
+        -- 4. Inserir Produto
+        INSERT INTO Production.Product
+        (
+            Name,
+            ProductNumber,
+            MakeFlag,
+            FinishedGoodsFlag,
+            Color,
+            SafetyStockLevel,
+            ReorderPoint,
+            StandardCost,
+            ListPrice,
+            DaysToManufacture,
+            SellStartDate,
+            ProductSubcategoryID,
+            rowguid,
+            ModifiedDate
+        )
+        VALUES
+        (
+            @ProductName,
+            @ProductNumber,
+            0,
+            1,
+            'Black',
+            100,
+            50,
+            10.00,
+            @ListPrice,
+            0,
+            GETDATE(),
+            @SubcategoryID,
+            NEWID(),
+            GETDATE()
+        );
+
+        COMMIT;
+
+        PRINT 'INSERT CONCLUÍDO';
+
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK;
+
+        THROW; -- melhor prática
+    END CATCH
+END;
+
