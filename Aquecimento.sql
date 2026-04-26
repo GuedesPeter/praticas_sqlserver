@@ -515,3 +515,38 @@ JOIN [Sales].[SalesTerritory] T
 	ON T.TerritoryID = H.TerritoryID
 GROUP BY T.TerritoryID, YEAR(H.OrderDate)
 ORDER BY T.TerritoryID, YearDt;
+---------------------------------------------------------------------
+
+-- 1) EXISTS
+-- Liste clientes que possuem pedidos após 2012
+
+SELECT
+	C.CustomerID
+FROM [Sales].[Customer] C
+WHERE EXISTS (
+	SELECT 1 FROM [Sales].[SalesOrderHeader] S
+	WHERE S.CustomerID = C.CustomerID
+	AND S.OrderDate >= '20130101'
+)
+
+
+-- 2) GROUP BY
+-- Conte pedidos por CustomerID
+
+SELECT
+	COUNT(SalesOrderID) AS QtPedidos,
+	CustomerID
+FROM [Sales].[SalesOrderHeader]
+GROUP BY CustomerID
+ORDER BY QtPedidos DESC;
+
+-- 3) HAVING
+-- Liste clientes com mais de 5 pedidos
+
+SELECT
+	CustomerID,
+	COUNT(SalesOrderID) AS QtPedidos
+FROM [Sales].[SalesOrderHeader]
+GROUP BY CustomerID
+HAVING COUNT(SalesOrderID) > 5
+ORDER BY QtPedidos DESC;
