@@ -132,13 +132,29 @@ ORDER BY SUM(TotalDue) DESC;
    🧠 RACIOCÍNIO:
 
    1. O que caracteriza “recente”?
+	Clientes que compraram nos últimos dois anos
    2. Onde está a data do pedido?
+    Na tabela de Vendas/Pedidos
    3. Você precisa verificar existência ou ausência?
+    Posso verificasr sim, se existem pedidos de um determinado cliente nos últimos dois anos
    4. A validação de data deve ocorrer dentro ou fora da subquery?
+	Se eu for validar a existencia, ela deve ocorrer dentro da subquery
    5. Como garantir que clientes antigos (com pedidos antigos) sejam incluídos corretamente?
+	O cenário visa identificar os clientes que não compram a bastante tempo, determinando que estes são identificados por não terem
+	realizado pedidos nos últimos 2 anos.
+	Clientes antigos serão considerados como recentes caso tenham algum pedido nos últimos 2 anos, do contrário, não estarão entre 
+	os recentes.
 
    ========================================================= */
-
+   SELECT
+    C.CustomerID
+FROM Sales.Customer AS C
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Sales.SalesOrderHeader AS H
+    WHERE H.CustomerID = C.CustomerID
+    AND H.OrderDate >= DATEADD(YEAR, -2, GETDATE())
+);
 
 
 /* =========================================================
@@ -156,14 +172,28 @@ ORDER BY SUM(TotalDue) DESC;
    🧠 RACIOCÍNIO:
 
    1. O que você precisa contar: pedidos ou anos?
+	Pedidos de um mesmo cliente em anos distintos
    2. Como identificar anos distintos?
+    Através de pedidos de um mesmo cliente realizados em anos diferentes.
+	ex.: Pedido 1, realizado em 2012 / Pedido 2, realizado em 2013
    3. Você precisa eliminar duplicidades?
+	Posso considerar o Id unico de cada pedido onde ao realizar os agrupamentos eliminariam chances de duplicidade pois não existem
+	pedidos com Id(chave-primarias) repetidos.
    4. O agrupamento deve ocorrer por cliente ou por cliente+ano?
+	Cliente e ano ou cliente,quantidade por ano
    5. O filtro ocorre antes ou depois da agregação?
-
+	Realizaria contagem de pedidose separação por ano antes ou no momento da agragação.
+	Não faria o Having após a agragação.
    ========================================================= */
 
+SELECT
+    CustomerID
+FROM Sales.SalesOrderHeader
+GROUP BY CustomerID
+HAVING COUNT(DISTINCT YEAR(OrderDate)) > 1;
 
+-- Nota: Se você quer contar "conceitos diferentes"
+-- → use COUNT(DISTINCT ...)
 
 /* =========================================================
    🧠 EX 3 — PRODUTOS COM BAIXO FATURAMENTO
