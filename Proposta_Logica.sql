@@ -210,14 +210,38 @@ HAVING COUNT(DISTINCT YEAR(OrderDate)) > 1;
    🧠 RACIOCÍNIO:
 
    1. Onde está o valor de venda?
+   Na tabela de vendas, no campo LineTotal
    2. Você precisa somar valores por produto?
+   Eu preciso somar o valor total dos produtos vendidos
    3. Como garantir que apenas produtos vendidos sejam considerados?
+   Considerando a junção entre Produtos e Vendas, onde vou considerar apenas produtos que constam na tabela de vendas
    4. O filtro ocorre antes ou depois da soma?
+   Depois da soma
    5. Você precisa combinar mais de uma tabela?
+   Sim, tabela de Produtos e Tabela de Vendas
 
    ========================================================= */
 
+   SELECT
+		P.ProductID,
+		SUM(S.LineTotal) AS Faturamento
+   FROM [Production].[Product] P
+   JOIN [Sales].[SalesOrderDetail] S
+   ON S.ProductID = P.ProductID
+   GROUP BY P.ProductID
+   HAVING SUM(S.LineTotal) < 5000;
 
+   -- Uma opção com formatação visual (para análise do setor de negócios)
+
+    SELECT
+		P.ProductID,
+		FORMAT(SUM(S.LineTotal),'C','pt-BR') AS Faturamento
+   FROM [Production].[Product] P
+   JOIN [Sales].[SalesOrderDetail] S
+   ON S.ProductID = P.ProductID
+   GROUP BY P.ProductID
+   HAVING SUM(S.LineTotal) < 5000
+   ORDER BY SUM(S.LineTotal) DESC;
 
 /* =========================================================
    🧠 EX 4 — CLIENTES COM PEDIDOS DE ALTO VALOR
@@ -234,13 +258,44 @@ HAVING COUNT(DISTINCT YEAR(OrderDate)) > 1;
    🧠 RACIOCÍNIO:
 
    1. Você precisa avaliar todos os pedidos ou apenas verificar um?
+		Eu preciso verificar se o cliente possui ao menos 1 pedido com valor > 10000
    2. Isso é validação ou agregação?
+		Validação
    3. Qual abordagem é mais simples e eficiente?
+		verificar se o cliente possui ao menos 1 pedido com valor > 10000, garantindo assim que ele
+		tenha realizado uma compra expressiva
    4. Você precisa agrupar resultados?
+		Ao verificar a existencia já ocorre o agrupamento
    5. Como garantir que cada cliente apareça apenas uma vez?
+		Ao realizar o agrupamento, validação ou distinção
 
    ========================================================= */
 
+   SELECT 
+	C.CustomerID
+   FROM [Sales].[Customer] C
+   WHERE EXISTS(
+	SELECT 1 FROM [Sales].[SalesOrderHeader] S
+	WHERE S.CustomerID = C.CustomerID
+	AND S.TotalDue > 10000
+   )
+   -- Opção com agregação
+   SELECT
+	CustomerID
+   FROM [Sales].[SalesOrderHeader]
+   WHERE TotalDue > 10000
+   GROUP BY CustomerID
+
+   -- Nota:
+--	Se a pergunta for:
+--“existe pelo menos um?”
+
+--→ EXISTS
+
+--Se a pergunta for:
+--“quantos existem?”
+
+--→ GROUP BY
 
 
 /* =========================================================
@@ -251,20 +306,31 @@ HAVING COUNT(DISTINCT YEAR(OrderDate)) > 1;
    A empresa quer identificar regiões com baixo número de pedidos.
 
    Regra:
-   👉 Território com menos de 50 pedidos
+   👉 Território com menos de 500 pedidos
 
    ---------------------------------------------------------
 
    🧠 RACIOCÍNIO:
 
    1. O que precisa ser contado?
+	A quantidade de pedidos por território
    2. Onde está essa informação?
+	Na tabela de Pedidos/Vendas
    3. Você precisa agrupar por qual campo?
+	Preciso agrupar por territorio
    4. O filtro deve ser aplicado antes ou depois da contagem?
+	Depois da contagem
    5. Qual função resolve esse problema?
+	Posso resolver com COUNT() para contar os pedidos 
 
    ========================================================= */
-
+   SELECT
+	TerritoryID,
+	COUNT(*) AS QtPedidos -- Ou COUNT(SalesOrderID)
+   FROM [Sales].[SalesOrderHeader]
+   GROUP BY TerritoryID
+   HAVING COUNT(*) < 500
+   ORDER BY QtPedidos;
 
 
 /* =========================================================
@@ -279,13 +345,26 @@ HAVING COUNT(DISTINCT YEAR(OrderDate)) > 1;
    🧠 RACIOCÍNIO:
 
    1. Onde está a informação de desconto?
+	Na tabela que contém os detalhes do Pedido/Venda
    2. Você precisa validar existência ou calcular algo?
+	Posso validar se existem produtos vendidos com desconto
    3. O desconto é por pedido ou por item?
+	No caso da tabela de detalhes da venda, o desconto ocorre por unidade do produto(item)
    4. Como relacionar produto com venda?
+	Pelo ID do produto
    5. Você precisa retornar produtos únicos?
-
+	Preciso retornar todos os produtos que foram vendidos com desconto
    ========================================================= */
 
+   SELECT 
+	P.ProductID,
+	P.Name
+   FROM [Production].[Product] P
+   WHERE EXISTS(
+	SELECT 1 FROM [Sales].[SalesOrderDetail] S
+	WHERE S.ProductID = P.ProductID
+	AND S.UnitPriceDiscount > 0 -- Garante que houve desconto no valor unitário do produto
+   );
 
 
 /* =========================================================
