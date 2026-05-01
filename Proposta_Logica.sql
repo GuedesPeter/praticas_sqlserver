@@ -382,13 +382,40 @@ HAVING COUNT(DISTINCT YEAR(OrderDate)) > 1;
    🧠 RACIOCÍNIO:
 
    1. Onde está o valor total?
+	Na tabela de vendas, no campo TotalDue
+
    2. Você precisa somar por cliente?
+	Preciso somar o faturamento de cada cliente para poder identificar os clientes mais lucrativos
+
    3. O filtro ocorre antes ou depois da soma?
+	Ocorre após a soma
+
    4. Qual cláusula será usada para filtrar?
+	Vou utilizar o HAVING para fazer o filtro
+
    5. Como ordenar os resultados para análise?
+	Para isso vou utilizar a cláusula ORDER BY DESC, para assim ordenar do cliente mais lucrativo 
+	para o menos lucrativo.(Ordenação na decrescente)
 
    ========================================================= */
 
+   SELECT
+	CustomerID,
+	SUM(TotalDue) AS Faturamento
+   FROM [Sales].[SalesOrderHeader]
+   GROUP BY CustomerID
+   HAVING SUM(TotalDue) > 100000
+   ORDER BY Faturamento DESC;
+
+   -- Opção visual para análise da empresa (Menos performática em produção)
+
+   SELECT
+	CustomerID,
+	FORMAT(SUM(TotalDue),'C','pt-BR') AS Faturamento
+   FROM [Sales].[SalesOrderHeader]
+   GROUP BY CustomerID
+   HAVING SUM(TotalDue) > 100000
+   ORDER BY SUM(TotalDue) DESC;
 
 
 /* =========================================================
@@ -411,13 +438,38 @@ HAVING COUNT(DISTINCT YEAR(OrderDate)) > 1;
    🧠 RACIOCÍNIO:
 
    1. Como extrair o ano da data?
+	Utilizando a função YEAR()
    2. Você precisa de quantas métricas?
+	Preciso saber a quantidade de pedidos, a soma total das vendas e seus respectivos anos de ocorrencia.
+
    3. Como combinar múltiplas agregações?
+	Utilizando o agrupamento por ano.
+	Assim as agregações serão exibidas ano a ano.
+
    4. Qual será o agrupamento?
+	Se o desempenho é medido ao longo do tempo, o agrupamento deve ser realizado por ANO que é a medida de tempo pedida na análise.
+
    5. Como ordenar para facilitar análise?
+	Posso ordenar por ano na descendente de modo a listar do ano mais atual para o mais antigo ou
+	na ascendente para listar a ordem crescente permitindo a visualização ano a ano desde o inicio.
 
    ========================================================= */
+   SELECT
+	COUNT(SalesOrderID) AS QtPedidos,
+	SUM(TotalDue) AS Faturamento,
+	YEAR(OrderDate) AS Por_Ano
+   FROM [Sales].[SalesOrderHeader]
+   GROUP BY YEAR(OrderDate)
+   ORDER BY Faturamento;
 
+   -- Opção (Apenas para análise da diretoria)
+   SELECT
+	COUNT(SalesOrderID) AS QtPedidos,
+	FORMAT(SUM(TotalDue),'C','pt-BR') AS Faturamento,
+	YEAR(OrderDate) AS Por_Ano
+   FROM [Sales].[SalesOrderHeader]
+   GROUP BY YEAR(OrderDate)
+   ORDER BY Por_Ano;
 
 
 /* =========================================================
@@ -435,12 +487,25 @@ HAVING COUNT(DISTINCT YEAR(OrderDate)) > 1;
    🧠 RACIOCÍNIO:
 
    1. O que precisa ser contado?
+	A quantidade de pedidos por cliente
    2. Qual tabela contém essa informação?
+	A tabela de Pedidos/Vendas
    3. Como agrupar corretamente?
+	Agrupando por clientes
    4. Em qual momento aplicar o filtro?
+	Após o agrupamento.
    5. Qual cláusula usar para isso?
+	Vou usar o HAVING
 
    ========================================================= */
+
+   SELECT
+	CustomerID AS Cliente,
+	COUNT(*) AS QtPedidos -- Também se aplica COUNT(SalesOrderID) 
+   FROM [Sales].[SalesOrderHeader]
+   GROUP BY CustomerID
+   HAVING COUNT(*) > 20
+   ORDER BY QtPedidos DESC; -- Evidencia os clientes com mais pedidos
 
 
 
@@ -462,9 +527,24 @@ HAVING COUNT(DISTINCT YEAR(OrderDate)) > 1;
    🧠 RACIOCÍNIO:
 
    1. O que significa “mais vendido” neste contexto?
+	Acredito que sejam produtos que se repetem em vários pedidos
    2. Onde está a quantidade vendida?
+	Na tabela de detalhes da Venda
    3. Você precisa somar quantidades?
+	Preciso somar a quantidade de cada item dentro do pedido
    4. Como relacionar produto com vendas?
+	Pelo Id do Produto
    5. Como ordenar os resultados?
+   Na descendente para identificar o maior volume para o menor.
 
    ========================================================= */
+
+   SELECT
+	P.ProductID,
+	SUM(S.OrderQty) AS QtItens
+   FROM [Production].[Product] P
+   JOIN [Sales].[SalesOrderDetail] S
+	ON S.ProductID = P.ProductID
+	GROUP BY P.ProductID
+	ORDER BY QtItens DESC;
+
